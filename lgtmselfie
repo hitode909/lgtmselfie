@@ -1,0 +1,30 @@
+#! /usr/bin/env perl
+use strict;
+use warnings;
+
+use File::Temp qw/tempdir/;
+
+for my $command (qw(imagesnap convert gyazo)) {
+    unless (`which $command`) {
+        print "Please install $command\n";
+        exit 1;
+    }
+}
+
+my $dir = tempdir(CLEANUP => 1);
+
+my @shots;
+
+for my $frame (1..3) {
+    my $shot = "$dir/snapshot-$frame.jpg";
+    my $lgtm = "$dir/lgtm-$frame.jpg";
+    system "imagesnap -q $shot";
+    system "convert $shot -resize 1000x1000 lgtm.gif -gravity center -composite $lgtm";
+
+    push @shots, $lgtm;
+}
+
+my $result = "$dir/out.gif";
+
+system "convert @{[ join(' ', @shots) ]} -resize 400x400 -loop 0 -delay 5 -coalesce $result";
+system "gyazo $result";
